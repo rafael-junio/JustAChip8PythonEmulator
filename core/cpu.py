@@ -129,7 +129,7 @@ class Cpu:
         Stores the value of register[y] into register[x]
 
         OP_CODE: 8xy0
-        OP_WHAT: 8 - Instruction / x - 4 bit register address / y - 8 bit register address / 0 - Instruction
+        OP_WHAT: 8 - Instruction / x - 4 bit register address / y - 4 bit register address / 0 - Instruction
         OP_description: Load the content of register[y] into register[x]
         """
         x = self.current_opcode & 0x0F00 >> 8
@@ -141,7 +141,7 @@ class Cpu:
         Performs a bitwise OR between values of register[x] and register[y]
 
         OP_CODE: 8xy1
-        OP_WHAT: 8 - Instruction / x - 4 bit register address / y - 8 bit register address / 1 - Instruction
+        OP_WHAT: 8 - Instruction / x - 4 bit register address / y - 4 bit register address / 1 - Instruction
         OP_description: Perfoms a bitwise comparasion OR between the values of register[x] and register[y] and stores the
         result into register[x]
         """
@@ -154,7 +154,7 @@ class Cpu:
         Performs a bitwise AND between values of register[x] and register[y]
 
         OP_CODE: 8xy2
-        OP_WHAT: 8 - Instruction / x - 4 bit register address / y - 8 bit register address / 2 - Instruction
+        OP_WHAT: 8 - Instruction / x - 4 bit register address / y - 4 bit register address / 2 - Instruction
         OP_description: Perfoms a bitwise comparasion between AND the values of register[x] and register[y] and stores the
         result into register[x]
         """
@@ -167,7 +167,7 @@ class Cpu:
         Performs a bitwise XOR between values of register[x] and register[y]
 
         OP_CODE: 8xy3
-        OP_WHAT: 8 - Instruction / x - 4 bit register address / y - 8 bit register address / 3 - Instruction
+        OP_WHAT: 8 - Instruction / x - 4 bit register address / y - 4 bit register address / 3 - Instruction
         OP_description: Perfoms a bitwise comparasion between XOR the values of register[x] and register[y] and stores the
         result into register[x]
         """
@@ -180,7 +180,7 @@ class Cpu:
         Performs a ADD between the values of register[x] and register[y]
 
         OP_CODE: 8xy4
-        OP_WHAT:  8 - Instruction / x - 4 bit register address / y - 8 bit register address / 4 - Instruction
+        OP_WHAT:  8 - Instruction / x - 4 bit register address / y - 4 bit register address / 4 - Instruction
         OP_description: Perfoms a ADD between register[x] and register[y] and stores the result value into register[x].
         If the result is greater than 255, than the register[0xF] (int(15)) is set to 1.
         """
@@ -198,7 +198,7 @@ class Cpu:
         Performs a SUB between the values of register[x] and register[y]
 
         OP_CODE: 8xy5
-        OP_WHAT:  8 - Instruction / x - 4 bit register address / y - 8 bit register address / 4 - Instruction
+        OP_WHAT:  8 - Instruction / x - 4 bit register address / y - 4 bit register address / 5 - Instruction
         OP_description: Perfoms a SUB between register[x] and register[y] and stores the result value into register[x].
         If the register[x] > register[y], than the register[0xF] (int(15)) is set to 1.
         """
@@ -211,3 +211,114 @@ class Cpu:
             self.registers[int(0xF)] = 0
         sub_x_y = x - y
         self.registers[x] = sub_x_y
+
+    def div_x_into_register_x(self):
+        """
+        Performs a division register[x]
+
+        OP_CODE: 8xy6
+        OP_WHAT:  8 - Instruction / x - 4 bit register address / y - 4 bit unused / 6 - Instruction
+        OP_description: Perfoms a DIV of register[x] and stores the result value into register[x].
+        If the register[x] least significant bit is 1, than the register[0xF] (int(15)) is set to 1.
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+
+        if (x & 0x1) == 0x1:
+            self.registers[int(0xF)] = 1
+        else:
+            self.registers[int(0xF)] = 0
+        div_x = x / 2
+        self.registers[x] = div_x
+
+    def sub_y_x_into_register_x(self):
+        """
+        Performs a SUB between the values of register[y] and register[x]
+
+        OP_CODE: 8xy7
+        OP_WHAT:  8 - Instruction / x - 4 bit register address / y - 4 bit register address / 7 - Instruction
+        OP_description: Perfoms a SUB between register[y] and register[x] and stores the result value into register[x].
+        If the register[x] > register[y], than the register[0xF] (int(15)) is set to 1.
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+        y = self.current_opcode & 0x00F0 >> 4
+
+        if x > y:
+            self.registers[int(0xF)] = 1
+        else:
+            self.registers[int(0xF)] = 0
+        sub_y_x = y - x
+        self.registers[x] = sub_y_x
+
+    def mul_x_into_register_x(self):
+        """
+        Performs a multiply register[x]
+
+        OP_CODE: 8xyE
+        OP_WHAT:  8 - Instruction / x - 4 bit register address / y - 4 bit unused / E - Instruction
+        OP_description: Perfoms a MUL of register[x] and stores the result value into register[x].
+        If the register[x] most significant bit is 1, than the register[0xF] (int(15)) is set to 1.
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+
+        if (x & 0x80 >> 7) == 0x1:
+            self.registers[int(0xF)] = 1
+        else:
+            self.registers[int(0xF)] = 0
+        mul_x = x * 2
+        self.registers[x] = mul_x
+
+    def skip_instr_register_x_not_equal_y(self):
+        """
+        Skips the next instructions if the Register[x] is  not equal to the register[y]
+
+        OP_CODE: 9xy0
+        OP_WHAT: 9 - Instruction / x - 4 bit register address / 4 - 4 bit register address / 0 - Unused
+        OP_description: Skip the pc by 2 if the register[x] is not equal to the register[y] byte content-wise
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+        y = self.current_opcode & 0x00F0 >> 4
+
+        if self.registers[x] != self.registers[y]:
+            self.pc += 2
+
+    def store_addr_on_index(self):
+        """
+        Set an address on the index register
+
+        OP_CODE: Annn
+        OP_WHAT: A - Instruction / nnn - 12 bit register address.
+        OP_description: Sets the value of the indes register with the 12 bit nnn address on the operand
+        """
+        addr = self.current_opcode & 0x0FFF
+        self.index = addr
+
+    def jump_to_location_nnn_plus_register_zero(self):
+        """
+        Jump to the location specified by the sum of the register 0 and the nnn operand
+
+        OP_CODE: Bnnn
+        OP_WHAT: B - Instruction / nnn - 12 bit register address.
+        OP_description: Sets the program counter with register[0] + nnn
+        """
+        addr = self.current_opcode & 0x0FFF
+        self.pc = addr + self.registers[0]
+
+    def store_random_number_on_register_x(self):
+        """
+        Generates a random number that is anded with kk abd stored on a register
+
+        OP_CODE: Cxkk
+        OP_WHAT: C - Instruction / x - 4 bit register address / kk - 8 bit value
+        OP_description: Sets the register[x] a random number anded with the kk value
+        """
+        # TODO: Implementation of a random number generation is still in working
+
+    # TODO: Big implementation that i will work last
+    def display_bytes_on_screen(self):
+        """
+
+        OP_CODE: Dxyn
+        OP_WHAT:
+        OP_description
+        """
+        pass
