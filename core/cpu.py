@@ -9,7 +9,7 @@ class Cpu:
         self.memory = np.zeros(4096, dtype=np.uint8)
         self.stack = deque()
         self.keypad = np.zeros(16, dtype=np.uint8)
-        self.video_display = np.zeros((64, 32), dtype=np.bool_)
+        self.video_display = np.zeros((64, 32), dtype=np.uint8)
         self.current_opcode = 0
         self.index = 0
         self.pc = 0
@@ -313,12 +313,41 @@ class Cpu:
         """
         # TODO: Implementation of a random number generation is still in working
 
-    # TODO: Big implementation that i will work last
+    # TODO: Change the pixels values from raw to a exported attribute
     def display_bytes_on_screen(self):
         """
 
         OP_CODE: Dxyn
         OP_WHAT:
         OP_description
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+        y = self.current_opcode & 0x00F0 >> 4
+        num_bytes = self.current_opcode & 0x000F
+        readed_bytes = []
+        self.registers[0xF] = 0
+
+        for i in range(num_bytes):
+            readed_bytes.append([self.memory[self.index + i]])
+
+        readed_array = np.array(readed_bytes, dtype=np.uint8)
+        readed_array = np.unpackbits(readed_array, axis=1)
+
+        for i, line in enumerate(readed_array):
+            for j, element in enumerate(line):
+                x_pos = (j+x) % 64
+                y_pos = (i+y) % 32
+                pixel_bit = self.video_display[x_pos][y_pos]
+                pixel_result = element ^ pixel_bit
+                self.video_display[x_pos][y_pos] = pixel_result
+                if pixel_bit == 1 and pixel_result == 0:
+                    self.registers[0xF] = 1
+
+    def skip_instruction_if_key_pressed(self):
+        """
+
+        OP_CODE: Ex9E
+        OP_WHAT:
+        OP_description:
         """
         pass
