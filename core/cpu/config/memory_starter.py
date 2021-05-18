@@ -1,6 +1,6 @@
 
 
-class MemoryManagement:
+class MemoryStarter:
 
     def __init__(self, chip8_cpu):
         self.chip8_cpu = chip8_cpu

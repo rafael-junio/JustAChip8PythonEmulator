@@ -1,14 +1,14 @@
-from core.cpu import Cpu
-from core.memory_management import MemoryManagement
-from core.chip8_config.config import Config
-from core.chip8_config.file_reader import FileReader
+from core.cpu.instructions import Cpu
+from core.cpu.config.memory_starter import MemoryStarter
+from core.cpu.config.memory_config import Config
+from core.reader.file_reader import FileReader
 
 
 class Main:
 
     def __init__(self):
         self.chip8_cpu = Cpu()
-        self.memory_management = MemoryManagement(self.chip8_cpu)
+        self.memory_management = MemoryStarter(self.chip8_cpu)
 
     def run(self):
         binary_file = FileReader.file_reader()
@@ -19,4 +19,7 @@ class Main:
         print(hex(self.chip8_cpu.memory[513]))
         print(hex(self.chip8_cpu.memory[0x2b4]))
         print(hex(self.chip8_cpu.memory[0x2b4 + 1]))
-        self.chip8_cpu.pc = self.chip8_cpu.memory[512]
+
+    def cycle(self):
+        # self.chip8_cpu.current_opcode = self.chip8_cpu.config
+        pass

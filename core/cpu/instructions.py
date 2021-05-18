@@ -1,22 +1,9 @@
 import numpy as np
-from collections import deque
-from .chip8_config.config import Config
+from core.cpu.registers import Registers
+from core.cpu.config.memory_config import Config
 
 
-class Cpu:
-
-    def __init__(self):
-        self.registers = np.zeros(16, dtype=np.uint8)
-        self.memory = np.zeros(4096, dtype=np.uint8)
-        self.stack = deque()
-        self.keypad = np.zeros(16, dtype=np.uint8)
-        self.video_display = np.zeros((64, 32), dtype=np.uint8)
-        self.current_opcode = 0
-        self.index = 0
-        self.pc = Config.MEMORY_START_ADDRESS
-        self.stack_pointer = 0
-        self.delay_timer = 0
-        self.sound_timer = 0
+class Cpu(Registers):
 
     def clear_the_display(self):
         """
@@ -37,7 +24,7 @@ class Cpu:
 
     def jump_to_location(self):
         """
-        Jump to a specific memory location without saving current status on the stack
+        Jump to a specific config location without saving current status on the stack
 
         OP_CODE: 1nnn
         OP_WHAT: 1 - Instruction / nnn - 12 bit address
@@ -47,11 +34,11 @@ class Cpu:
 
     def call_to_location(self):
         """
-        Call to a specific memory location saving the current status on the stack
+        Call to a specific config location saving the current status on the stack
 
         OP_CODE: 2nnn
         OP_WHAT: 2 - Instruction  / nnn - 12 bit address
-        OP_description: Saves the current opcode on the stack and sets the program counter (pc) to the 12 bit memory
+        OP_description: Saves the current opcode on the stack and sets the program counter (pc) to the 12 bit config
         address specified in the nnn and
         """
         self.stack_pointer += 1
@@ -337,8 +324,8 @@ class Cpu:
 
         for i, line in enumerate(readed_array):
             for j, element in enumerate(line):
-                x_pos = (j+x) % 64
-                y_pos = (i+y) % 32
+                x_pos = (j + x) % 64
+                y_pos = (i + y) % 32
                 pixel_bit = self.video_display[x_pos][y_pos]
                 pixel_result = element ^ pixel_bit
                 self.video_display[x_pos][y_pos] = pixel_result
@@ -436,7 +423,7 @@ class Cpu:
 
     def stores_on_index_hex_sprite(self):
         """
-        Stores the memory address of sprite with register x value
+        Stores the config address of sprite with register x value
 
         OP_CODE: Fx29
         OP_WHAT: F - Instruction / x - 4 bit register address / 29 - 8 bit instruction
@@ -448,7 +435,7 @@ class Cpu:
 
     def load_bcd_on_memory(self):
         """
-        Stores the BCD representation of Vx in memory on index locations
+        Stores the BCD representation of Vx in config on index locations
 
         OP_CODE: Fx33
         OP_WHAT:
@@ -462,7 +449,7 @@ class Cpu:
 
     def load_registers_onto_memory(self):
         """
-        Stores the value of a register into the memory
+        Stores the value of a register into the config
         OP_CODE: Fx55
         OP_WHAT:
         """
@@ -474,7 +461,7 @@ class Cpu:
 
     def load_memory_onto_register(self):
         """
-        Stores the value of a register into the memory
+        Stores the value of a register into the config
         OP_CODE: Fx65
         OP_WHAT:
         """
