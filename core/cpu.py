@@ -1,5 +1,6 @@
 import numpy as np
 from collections import deque
+from .chip8_config.config import Config
 
 
 class Cpu:
@@ -12,7 +13,7 @@ class Cpu:
         self.video_display = np.zeros((64, 32), dtype=np.uint8)
         self.current_opcode = 0
         self.index = 0
-        self.pc = 0
+        self.pc = Config.MEMORY_START_ADDRESS
         self.stack_pointer = 0
         self.delay_timer = 0
         self.sound_timer = 0
@@ -316,10 +317,11 @@ class Cpu:
     # TODO: Change the pixels values from raw to a exported attribute
     def display_bytes_on_screen(self):
         """
+        Display n-bytes on screen
 
         OP_CODE: Dxyn
-        OP_WHAT:
-        OP_description
+        OP_WHAT: D - Instruction / x - 4 bit register address / y - 4 bit register address / n - n bytes value
+        OP_description: Change n bytes from position stored on register[x] and register[y]
         """
         x = self.current_opcode & 0x0F00 >> 8
         y = self.current_opcode & 0x00F0 >> 4
@@ -345,9 +347,139 @@ class Cpu:
 
     def skip_instruction_if_key_pressed(self):
         """
-
+        Skips the next instruction if the keys corresponding on the register x value is equal the value of the key
         OP_CODE: Ex9E
-        OP_WHAT:
-        OP_description:
+        OP_WHAT: E - Instruction / x - 4 bit register address / 9E - 8 bit instruction
+        OP_description: If the register[x] is equal to the key number, than pc += 2
         """
-        pass
+        x = self.current_opcode & 0x0F00 >> 8
+
+        if self.keypad[x]:
+            self.pc += 2
+
+    def not_skip_instruction_if_key_pressed(self):
+        """
+        Not Skips the next instruction if the keys corresponding on the register x value is equal the value of the key
+        OP_CODE: ExA1
+        OP_WHAT: E - Instruction / x - 4 bit register address / A1 - 8 bit instruction
+        OP_description: If the register[x] is equal to the key number, than pc += 2
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+
+        if not self.keypad[x]:
+            self.pc += 2
+
+    def delay_timer_on_register_x(self):
+        """
+        Stores delay timer on register x
+
+        OP_CODE: Fx07
+        OP_WHAT: F - Instruction / x - 4 bit register address / 07 - 8 bit instruction
+        OP_description: Stores the value of self.delay_timer on register[x]
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+
+        self.registers[x] = self.delay_timer
+
+    def wait_for_key_press(self):
+        """
+        Waits for a key to be pressed and stores value on register x
+
+        OP_CODE: Fx0A
+        OP_WHAT: F - Instruction / x - 4 register address / 0A - 8 bit instruction
+        OP_description: Waits for a key to be pressed, and than stores the value of the key on register[x]
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+        key_press = False
+
+        while not key_press:
+            key_pressed = np.where(self.keypad == 1)
+            if key_pressed:
+                self.registers[x] = key_pressed[0]
+                key_press = True
+
+    def register_x_on_delay_timer(self):
+        """
+        Stores register x value on the delay timer
+
+        OP_CODE: Fx15
+        OP_WHAT: F - Instruction / x - 4 bit register address / 15 - 8 bit instruction
+        OP_description: Stores the value of register[x] on self.delay_timer
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+
+        self.delay_timer = self.registers[x]
+
+    def sound_timer_on_register_x(self):
+        """
+        Stores sound timer on register x
+
+        OP_CODE: Fx18
+        OP_WHAT: F - Instruction / x - 4 bit register address / 18 - 8 bit instruction
+        OP_description: Stores the value of self.sound_timer on register[x]
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+
+        self.registers[x] = self.sound_timer
+
+    def add_register_x_and_index(self):
+        """
+        Add values of index and register x and stores on index
+
+        OP_CODE: Fx1E
+        OP_WHAT: F - Instruction / x - 4 bit register address / 1E - 8 bit instruction
+        OP_description: Add values of self.index and register[x] and stores result on self.index
+        """
+        x = self.current_opcode & 0x0F00 >> 8
+
+        self.index = self.registers[x] + self.index
+
+    def stores_on_index_hex_sprite(self):
+        """
+        Stores the memory address of sprite with register x value
+
+        OP_CODE: Fx29
+        OP_WHAT: F - Instruction / x - 4 bit register address / 29 - 8 bit instruction
+        """
+
+        x = self.current_opcode & 0x0F00 >> 8
+
+        self.index = Config.FONT_SET_START_ADDRESS + (self.registers[x] * 5)
+
+    def load_bcd_on_memory(self):
+        """
+        Stores the BCD representation of Vx in memory on index locations
+
+        OP_CODE: Fx33
+        OP_WHAT:
+        """
+
+        x = self.current_opcode & 0x0F00 >> 8
+
+        self.memory[self.index] = int(str(self.registers[x])[-3])
+        self.memory[self.index + 1] = int(str(self.registers[x])[-2])
+        self.memory[self.index + 2] = int(str(self.registers[x])[-1])
+
+    def load_registers_onto_memory(self):
+        """
+        Stores the value of a register into the memory
+        OP_CODE: Fx55
+        OP_WHAT:
+        """
+
+        x = self.current_opcode & 0x0F00 >> 8
+
+        for i in range(x):
+            self.memory[self.index + i] = self.registers[i]
+
+    def load_memory_onto_register(self):
+        """
+        Stores the value of a register into the memory
+        OP_CODE: Fx65
+        OP_WHAT:
+        """
+
+        x = self.current_opcode & 0x0F00 >> 8
+
+        for i in range(x):
+            self.registers[i] = self.memory[self.index + i]
