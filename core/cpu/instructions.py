@@ -5,13 +5,63 @@ from core.cpu.config.memory_config import Config
 
 class Cpu(Registers):
 
+    def __init__(self):
+        super().__init__()
+        self.instructions_table = {}
+        self.config_instructions()
+
+    def config_instructions(self):
+
+        self.instructions_table = {
+            # Unique OPCODES
+            '1': self.jump_to_location,
+            '2': self.call_to_location,
+            '3': self.skip_instr_register_x_equals_kk,
+            '4': self.skip_instr_register_x_not_equal_kk,
+            '5': self.skip_instr_register_x_equal_y,
+            '6': self.load_value_into_register,
+            '7': self.load_value_into_register_add,
+            '9': self.skip_instr_register_x_not_equal_y,
+            'a': self.store_addr_on_index,
+            'b': self.jump_to_location_nnn_plus_register_zero,
+            'c': self.store_random_number_on_register_x,
+            'd': self.display_bytes_on_screen,
+            # Digit 8 on start
+            '8': {'0': self.load_register_y_into_register_x,
+                  '1': self.cmp_or_x_y_into_register_x,
+                  '2': self.cmp_and_x_y_into_register_x,
+                  '3': self.cmp_xor_x_y_into_register_x,
+                  '4': self.add_x_y_into_register_x,
+                  '5': self.sub_x_y_into_register_x,
+                  '6': self.div_x_into_register_x,
+                  '7': self.sub_y_x_into_register_x,
+                  'e': self.mul_x_into_register_x
+                  },
+            # Digit 0 starters
+            '00e0': self.clear_the_display,
+            '00ee': self.return_from_subroutine,
+            # Digit E start
+            'e': {'a1': self.not_skip_instruction_if_key_pressed,
+                  '9e': self.skip_instruction_if_key_pressed},
+            # Digit F start
+            'f': {'07': self.delay_timer_on_register_x,
+                  '0a': self.wait_for_key_press,
+                  '15': self.register_x_on_delay_timer,
+                  '18': self.sound_timer_on_register_x,
+                  '1e': self.add_register_x_and_index,
+                  '29': self.stores_on_index_hex_sprite,
+                  '33': self.load_bcd_on_memory,
+                  '55': self.load_registers_onto_memory,
+                  '65': self.load_memory_onto_register}
+            }
+
     def clear_the_display(self):
         """
         Completely set the video display to off, setting the array to False
 
         OP_CODE: 00E0
         """
-        self.video_display = np.zeros((64, 32), dtype=np.bool_)
+        self.video_display = np.zeros((128, 32), dtype=np.uint8)
 
     def return_from_subroutine(self):
         """

@@ -15,11 +15,11 @@ class Main:
         file_buffer_list = FileReader.load_binary_to_buffer(binary_file)
         self.memory_management.load_into_memory(file_buffer_list, Config.MEMORY_START_ADDRESS)
         self.memory_management.load_into_memory(Config.FONT_SET, Config.FONT_SET_START_ADDRESS)
-        print(hex(self.chip8_cpu.memory[512]))
-        print(hex(self.chip8_cpu.memory[513]))
-        print(hex(self.chip8_cpu.memory[0x2b4]))
-        print(hex(self.chip8_cpu.memory[0x2b4 + 1]))
+        self.cycle()
 
     def cycle(self):
-        # self.chip8_cpu.current_opcode = self.chip8_cpu.config
-        pass
+        program_counter = self.chip8_cpu.pc
+        self.chip8_cpu.current_opcode = self.chip8_cpu.memory[program_counter] << 8 | \
+                                        self.chip8_cpu.memory[program_counter + 1]
+        self.chip8_cpu.pc += 2
+        print(hex(self.chip8_cpu.current_opcode))
